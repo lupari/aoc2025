@@ -1,0 +1,16 @@
+package assignments
+
+import scala.collection.immutable.NumericRange
+import scala.io.Source
+
+object Day02:
+
+  val input: String = Source.fromResource("day02.txt").mkString
+  val ranges: Seq[NumericRange.Inclusive[Long]] =
+    input.split(",").toSeq.map { case s"$start-$end" => start.toLong to end.toLong }
+
+  def isInvalid(s: String): Boolean = s.take(s.length / 2) == s.drop(s.length / 2)
+  def isInvalid2(s: String): Boolean = (1 to s.length / 2).exists(k => s.grouped(k).distinct.size == 1)
+
+  def partOne(): Long = ranges.flatMap(_.filter(n => isInvalid(n.toString))).sum
+  def partTwo(): Long = ranges.flatMap(_.filter(n => isInvalid2(n.toString))).sum

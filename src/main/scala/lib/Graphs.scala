@@ -67,7 +67,7 @@ object Graphs:
   object aStar:
     def apply[A](start: A, goal: A)(nf: A => Set[(A, Int)])(hf: A => Long): Option[Long] =
       case class Node(point: A, cost: Long, estimatedTotalCost: Long)
-      val priorityQueue = mutable.PriorityQueue.empty[Node](Ordering.by(-_.estimatedTotalCost))
+      val priorityQueue = mutable.PriorityQueue.empty[Node](using Ordering.by(-_.estimatedTotalCost))
       priorityQueue.enqueue(Node(start, 0, hf(start)))
 
       val visited   = collection.mutable.Set.empty[A]
@@ -90,7 +90,7 @@ object Graphs:
         ef: A => Boolean
     ): (Map[A, Int], Option[(A, Int)]) =
       val distances = mutable.Map[A, Int](start -> 0)
-      val unseen    = mutable.PriorityQueue((0, start))(Ordering.by(-_._1))
+      val unseen    = mutable.PriorityQueue((0, start))(using Ordering.by(-_._1))
       val visited   = mutable.Set.empty[A]
       while unseen.nonEmpty do
         val (currentDist, currentNode) = unseen.dequeue()
