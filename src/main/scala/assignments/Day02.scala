@@ -6,8 +6,7 @@ import scala.io.Source
 object Day02:
 
   val input: String = Source.fromResource("day02.txt").mkString
-  val ranges: Seq[NumericRange.Inclusive[Long]] =
-    input.split(",").toSeq.map { case s"$start-$end" => start.toLong to end.toLong }
+  val ranges: Seq[NumericRange.Inclusive[Long]] = input.split(",").toSeq.map { case s"$s-$e" => s.toLong to e.toLong }
 
   def isInvalid(s: String): Boolean = s.take(s.length / 2) == s.drop(s.length / 2)
   def isInvalid2(s: String): Boolean = (1 to s.length / 2).exists(k => s.grouped(k).distinct.size == 1)
