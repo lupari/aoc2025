@@ -31,29 +31,26 @@ object Points:
       case 180 | -180 => Point(-x, -y)
       case -90 | 270  => Point(-y, x)
       case _          => this
-    def manhattan(p: Point = Position.zero): Int = (p.x - x).abs + (p.y - y).abs
-    def dist(p1: Point, p2: Point): Int =
-      if (p1.x - p2.x).abs == 1 && (p1.y - p2.y).abs == 1 then 1
-      else (p1.x - p2.x).abs + (p1.y - p2.y).abs
-    def directionTo(other: Point): Char = other match
-      case Point(x2, y2) if x2 == x && y2 < y => 'N'
-      case Point(x2, y2) if x2 == x && y2 > y => 'S'
-      case Point(x2, y2) if y2 == y && x2 < x => 'W'
-      case Point(x2, y2) if y2 == y && x2 > x => 'E'
-      case _ => throw new IllegalArgumentException("Points are equal")
+    def manhattan(p: Point = Point.zero): Int = (p.x - x).abs + (p.y - y).abs
+    def dist(p: Point): Int =
+      if (x - p.x).abs == 1 && (y - p.y).abs == 1 then 1
+      else (x - p.x).abs + (y - p.y).abs
+    def directionTo(other: Point): Option[Char] = other match
+      case Point(x2, y2) if x2 == x && y2 < y => Some('N')
+      case Point(x2, y2) if x2 == x && y2 > y => Some('S')
+      case Point(x2, y2) if y2 == y && x2 < x => Some('W')
+      case Point(x2, y2) if y2 == y && x2 > x => Some('E')
+      case _ => None
     def mkString = s"$x,$y"  
-
-  object Point:
-    val zero: Point = Point(0, 0)
-
+    
   case class Line(p1: Point, p2: Point):
     val (dx, dy) = ((p2.x - p1.x).sign, (p2.y - p1.y).sign)
     def points: Seq[Point] =
       val max = math.max((p2.x - p1.x).abs, (p2.y - p1.y).abs)
       (0 to max).map(i => Point(p1.x + dx * i, p1.y + dy * i))
 
-  object Position:
-    val zero: Point               = Point(0, 0)
+  object Point:
+    val zero: Point = Point(0, 0)
     val neighbors: List[Point]    = List(Point(1, 0), Point(-1, 0), Point(0, 1), Point(0, -1))
     val corners: List[Point]      = List(Point(1, 1), Point(-1, 1), Point(1, -1), Point(-1, -1))
     val surroundings: List[Point] = neighbors ++ corners

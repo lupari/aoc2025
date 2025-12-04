@@ -1,4 +1,4 @@
-import org.scalatest._
+import org.scalatest.*
 import assignments.Day03
 
 class Test03 extends flatspec.AnyFlatSpec with matchers.should.Matchers:
