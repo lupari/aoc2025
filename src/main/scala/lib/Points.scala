@@ -54,20 +54,12 @@ object Points:
     val neighbors: List[Point]    = List(Point(1, 0), Point(-1, 0), Point(0, 1), Point(0, -1))
     val corners: List[Point]      = List(Point(1, 1), Point(-1, 1), Point(1, -1), Point(-1, -1))
     val surroundings: List[Point] = neighbors ++ corners
-    def directions: Map[Char, Point] = Map(
-      'E' -> Point(1, 0),
-      '>' -> Point(1, 0),
-      'R' -> Point(1, 0),
-      'W' -> Point(-1, 0),
-      '<' -> Point(-1, 0),
-      'L' -> Point(-1, 0),
-      'N' -> Point(0, -1),
-      'U' -> Point(0, -1),
-      '^' -> Point(0, -1),
-      'D' -> Point(0, 1),
-      'S' -> Point(0, 1),
-      'v' -> Point(0, 1)
-    )
+    val directions: Map[Char, Point] = 
+      val east = "E>R".map(_ -> Point(1, 0))
+      val west = "W<L".map(_ -> Point(-1, 0))
+      val north = "N^U".map(_ -> Point(0, -1))
+      val south = "SvD".map(_ -> Point(0, 1))
+      (east ++ west ++ north ++ south).toMap
 
   case class Dir(p: Point, dir: Char):
     def forward(n: Int = 1): Dir = dir match
