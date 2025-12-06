@@ -1,12 +1,12 @@
 package assignments
 
 import scala.annotation.tailrec
-import scala.io.Source
 import lib.GridExtensions.*
+import lib.Input
 import lib.Points.Point
 
 object Day04:
-  val grid: Grid[Char] = Source.fromResource("day04.txt").mkString.toGrid
+  val grid: Grid[Char] = Input("day04.txt").asGrid
 
   def isRemovable(p: Point, g: Grid[Char]): Boolean =
     p.surroundings.flatMap(g.get).count(_ == '@') < 4

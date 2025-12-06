@@ -1,6 +1,6 @@
 package assignments
 
-import scala.io.Source
+import lib.Input
 
 object Day01:
 
@@ -8,7 +8,7 @@ object Day01:
     case 'L' => -l.tail.toInt
     case 'R' => l.tail.toInt
 
-  val instructions: List[Int] = Source.fromResource("day01.txt").getLines.map(parse).toList
+  val instructions: List[Int] = Input("day01.txt").asList.map(parse)
 
   def turn(pos: Int, instruction: Int): Int = Math.floorMod(pos + instruction, 100)
 

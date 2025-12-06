@@ -1,17 +1,19 @@
 package assignments
 
 import scala.annotation.tailrec
-import scala.io.Source
+import lib.Input
 
 object Day05:
-  case class Range(start: Long, end: Long)
-  val input: List[String] = Source.fromResource("day05.txt").getLines().toList
+  case class Range(start: Long, end: Long):
+    def contains(n: Long): Boolean = n >= start && n <= end
+
+  val input: List[String] = Input("day05.txt").asList
   val fresh: List[Range] =
     input.takeWhile(_.nonEmpty).map { case s"$s-$e" => Range(s.toLong, e.toLong) }
 
   def partOne(): Long =
     val available = input.dropWhile(_.nonEmpty).tail.map(_.toLong)
-    available.count(a => fresh.exists(r => a >= r.start && a <= r.end))
+    available.count(a => fresh.exists(_.contains(a)))
 
   def partTwo(): Long =
     @tailrec

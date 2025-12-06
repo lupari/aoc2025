@@ -1,11 +1,10 @@
 package assignments
 
 import scala.annotation.tailrec
-import scala.io.Source
+import lib.Input
 
 object Day03:
-
-  val banks: List[String] = Source.fromResource("day03.txt").getLines.toList
+  val banks: List[String] = Input("day03.txt").asList
 
   def joltage(s: String, k: Int): Long =
     val digits = s.map(_.asDigit)

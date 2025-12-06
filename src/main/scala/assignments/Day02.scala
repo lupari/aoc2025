@@ -1,11 +1,11 @@
 package assignments
 
 import scala.collection.immutable.NumericRange
-import scala.io.Source
+import lib.Input
 
 object Day02:
 
-  val input: String = Source.fromResource("day02.txt").mkString
+  val input: String = Input("day02.txt").asString
   val ranges: Seq[NumericRange.Inclusive[Long]] =
     input.split(",").toSeq.map { case s"$s-$e" => s.toLong to e.toLong }
 
