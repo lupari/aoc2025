@@ -49,6 +49,13 @@ object Points:
       val max = math.max((p2.x - p1.x).abs, (p2.y - p1.y).abs)
       (0 to max).map(i => Point(p1.x + dx * i, p1.y + dy * i))
 
+  case class Point3(x: Int, y: Int, z: Int):
+    def distance(other: Point3): Long =
+      val dx = (other.x - x).toLong
+      val dy = (other.y - y).toLong
+      val dz = (other.z - z).toLong
+      dx * dx + dy * dy + dz * dz
+  
   object Point:
     val zero: Point = Point(0, 0)
     val neighbors: List[Point]    = List(Point(1, 0), Point(-1, 0), Point(0, 1), Point(0, -1))
