@@ -9,7 +9,7 @@ object Points:
     def !=(p: Point): Boolean        = p.x != x || p.y != y
     def <=(p: Point): Boolean        = x <= p.x && y <= p.y
     def >=(p: Point): Boolean        = x >= p.x && y >= p.y
-    def <=>(p: Point): Boolean       = x >= 0 && y>=0 && this <= p
+    def <=>(p: Point): Boolean       = x >= 0 && y >= 0 && this <= p
     def cross(p: Point): Int         = x * p.y - y * p.x
     def left(n: Int = 1): Point      = Point(x - n, y)
     def right(n: Int = 1): Point     = Point(x + n, y)
@@ -26,28 +26,29 @@ object Points:
     def corners: List[Point] =
       List(Point(x - 1, y - 1), Point(x - 1, y + 1), Point(x + 1, y - 1), Point(x + 1, y + 1))
     def surroundings: List[Point] = neighbors ++ corners
-    def rotate(deg: Int): Point = deg % 360 match
-      case 90 | -270  => Point(y, -x)
-      case 180 | -180 => Point(-x, -y)
-      case -90 | 270  => Point(-y, x)
-      case _          => this
+    def rotate(deg: Int): Point =
+      deg % 360 match
+        case 90 | -270  => Point(y, -x)
+        case 180 | -180 => Point(-x, -y)
+        case -90 | 270  => Point(-y, x)
+        case _          => this
     def manhattan(p: Point = Point.zero): Int = (p.x - x).abs + (p.y - y).abs
     def dist(p: Point): Int =
       if (x - p.x).abs == 1 && (y - p.y).abs == 1 then 1
       else (x - p.x).abs + (y - p.y).abs
-    def directionTo(other: Point): Option[Char] = other match
-      case Point(x2, y2) if x2 == x && y2 < y => Some('N')
-      case Point(x2, y2) if x2 == x && y2 > y => Some('S')
-      case Point(x2, y2) if y2 == y && x2 < x => Some('W')
-      case Point(x2, y2) if y2 == y && x2 > x => Some('E')
-      case _ => None
-    def mkString = s"$x,$y"  
-    
-  case class Line(p1: Point, p2: Point):
-    val (dx, dy) = ((p2.x - p1.x).sign, (p2.y - p1.y).sign)
-    def points: Seq[Point] =
-      val max = math.max((p2.x - p1.x).abs, (p2.y - p1.y).abs)
-      (0 to max).map(i => Point(p1.x + dx * i, p1.y + dy * i))
+    def directionTo(other: Point): Option[Char] =
+      other match
+        case Point(x2, y2) if x2 == x && y2 < y => Some('N')
+        case Point(x2, y2) if x2 == x && y2 > y => Some('S')
+        case Point(x2, y2) if y2 == y && x2 < x => Some('W')
+        case Point(x2, y2) if y2 == y && x2 > x => Some('E')
+        case _                                  => None
+    def mkString = s"$x,$y"
+
+  case class Line(p: Point, q: Point):
+    def points: Set[Point] =
+      (for x <- (p.x min q.x) to (p.x max q.x); y <- (p.y min q.y) to (p.y max q.y)
+      yield Point(x, y)).toSet
 
   case class Point3(x: Int, y: Int, z: Int):
     def distance(other: Point3): Long =
@@ -55,15 +56,15 @@ object Points:
       val dy = (other.y - y).toLong
       val dz = (other.z - z).toLong
       dx * dx + dy * dy + dz * dz
-  
+
   object Point:
-    val zero: Point = Point(0, 0)
+    val zero: Point               = Point(0, 0)
     val neighbors: List[Point]    = List(Point(1, 0), Point(-1, 0), Point(0, 1), Point(0, -1))
     val corners: List[Point]      = List(Point(1, 1), Point(-1, 1), Point(1, -1), Point(-1, -1))
     val surroundings: List[Point] = neighbors ++ corners
-    val directions: Map[Char, Point] = 
-      val east = "E>R".map(_ -> Point(1, 0))
-      val west = "W<L".map(_ -> Point(-1, 0))
+    val directions: Map[Char, Point] =
+      val east  = "E>R".map(_ -> Point(1, 0))
+      val west  = "W<L".map(_ -> Point(-1, 0))
       val north = "N^U".map(_ -> Point(0, -1))
       val south = "SvD".map(_ -> Point(0, 1))
       (east ++ west ++ north ++ south).toMap
@@ -95,3 +96,10 @@ object Points:
         x <- (min.x to max.x).iterator
         y <- (min.y to max.y).iterator
       yield Point(x, y)
+    
+    def contains(p: Point, strict: Boolean = false): Boolean =
+      if strict then
+        min.x < p.x && p.x < max.x && min.y < p.y && p.y < max.y
+      else
+        min.x <= p.x && p.x <= max.x && min.y <= p.y && p.y <= max.y
+
