@@ -2,6 +2,7 @@ package lib
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.collection.concurrent.TrieMap
 
 object Search:
   object binSearch:
@@ -34,4 +35,8 @@ object Search:
         if rank(rootX) == rank(rootY) then rank(higher) += 1
         true
 
-    def union(pair: (T, T)): Boolean = union(pair._1, pair._2)    
+    def union(pair: (T, T)): Boolean = union(pair._1, pair._2)
+
+  def memoize[A, B](f: A => B): A => B =
+    val cache = TrieMap.empty[A, B]
+    arg => cache.getOrElseUpdate(arg, f(arg))

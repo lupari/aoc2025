@@ -9,60 +9,69 @@ object Graphs:
   object dfs:
     // provides all nodes accessible from start, does not keep track of paths
     def apply[A](start: A)(nf: A => Iterable[A]): Iterable[A] =
-      def _dfs(s: A, seen: Iterable[A]): Iterable[A] =
-        if seen.iterator.contains(s) then seen
+      def helper(s: A, seen: Set[A]): Set[A] =
+        if seen.contains(s) then seen
         else
-          val neighbors = nf(s).filterNot(seen.iterator.contains)
-          neighbors.foldLeft(Iterable(s) ++ seen)((b, a) => _dfs(a, b))
+          val neighbors = nf(s).filterNot(seen.contains)
+          neighbors.foldLeft(seen + s)((b, a) => helper(a, b))
 
-      _dfs(start, Nil)
+      helper(start, Set.empty)
 
     // provides all accessible paths to an end node from start
     def search[A](start: A)(next: A => Seq[A])(goal: A => Boolean): Seq[Seq[A]] =
-      def _dfs(p: A, path: Seq[A], visited: Set[A]): Seq[Seq[A]] =
+      def helper(p: A, path: Seq[A], visited: Set[A]): Seq[Seq[A]] =
         if goal(p) then Seq(path)
         else
           val neighbors = next(p).filterNot(visited.contains)
-          neighbors.flatMap(n => _dfs(n, path :+ n, visited + n))
+          neighbors.flatMap(n => helper(n, path :+ n, visited + n))
 
-      _dfs(start, Seq(start), Set(start))
+      helper(start, Seq(start), Set(start))
+
+    // counts paths from start to goal using memoization (avoids OOM from path enumeration)
+    def countPaths[A](start: A)(next: A => Iterable[A])(goal: A => Boolean): Long =
+      import Search.memoize
+      lazy val helper: A => Long = memoize { node =>
+        if goal(node) then 1L else next(node).map(helper).sum
+      }
+      helper(start)
 
   object bfs:
     def traverse[A](start: A)(nf: A => Iterable[A]): Map[A, Int] =
       @tailrec
-      def _traverse(seen: Map[A, Int], unseen: Map[A, Int]): Map[A, Int] =
+      def helper(seen: Map[A, Int], unseen: Map[A, Int]): Map[A, Int] =
         val neighbors = for (node, cost) <- unseen; newNode <- nf(node) yield newNode -> (cost + 1)
         val seen2     = seen ++ unseen
         val unseen2   = neighbors.filterNot(n => seen.contains(n._1))
-        if unseen2.isEmpty then seen2 else _traverse(seen2, unseen2)
+        if unseen2.isEmpty then seen2 else helper(seen2, unseen2)
 
-      _traverse(Map.empty, Map(start -> 0))
+      helper(Map.empty, Map(start -> 0))
 
     def search[A](start: A)(nf: A => Iterable[A])(ef: A => Boolean): Option[(Int, List[A])] =
       @tailrec
-      def _search(
+      def helper(
           unseen: Iterable[A],
           cost: Map[A, Int],
           predecessors: Map[A, A]
       ): Option[(Int, List[A])] = unseen match
         case h :: t if ef(h) =>
           // Reconstruct the path by backtracking from the end node
-          val path = Iterator
-            .iterate(h)(predecessors)
-            .takeWhile(predecessors.contains)
-            .toList
-            .reverse :+ h
-          Some(cost(h), start +: path)
+          @tailrec
+          def buildPath(node: A, acc: List[A]): List[A] =
+            predecessors.get(node) match
+              case Some(prev) => buildPath(prev, prev :: acc)
+              case None       => acc
+          val path = buildPath(h, List(h))
+          Some(cost(h), path)
         case h :: t =>
           val neighbors = nf(h).filterNot(cost.contains)
-          _search(
+          helper(
             t ++ neighbors,
             cost ++ neighbors.map(n => n -> (cost(h) + 1)),
             predecessors ++ neighbors.map(n => n -> h)
           )
         case _ => None
 
-      _search(List(start), Map(start -> 0), Map.empty)
+      helper(List(start), Map(start -> 0), Map.empty)
 
   object aStar:
     def apply[A](start: A, goal: A)(nf: A => Set[(A, Int)])(hf: A => Long): Option[Long] =
@@ -75,14 +84,16 @@ object Graphs:
 
       while priorityQueue.nonEmpty do
         val current = priorityQueue.dequeue()
-        if current.point == goal then return Some(current.cost)
-        nf(current.point).foreach { case (neighbor, moveCost) =>
-          val newCost = current.cost + moveCost
-          if newCost < bestCosts.getOrElse(neighbor, Long.MaxValue) then
-            bestCosts(neighbor) = newCost
-            val estimatedTotalCost = newCost + hf(neighbor)
-            priorityQueue.enqueue(Node(neighbor, newCost, estimatedTotalCost))
-        }
+        if !visited.contains(current.point) then
+          visited.add(current.point)
+          if current.point == goal then return Some(current.cost)
+          nf(current.point).foreach { case (neighbor, moveCost) =>
+            val newCost = current.cost + moveCost
+            if newCost < bestCosts.getOrElse(neighbor, Long.MaxValue) then
+              bestCosts(neighbor) = newCost
+              val estimatedTotalCost = newCost + hf(neighbor)
+              priorityQueue.enqueue(Node(neighbor, newCost, estimatedTotalCost))
+          }
       None
 
   object dijkstra:
@@ -104,6 +115,44 @@ object Graphs:
               unseen.enqueue((newDist, neighbor))
 
       (distances.toMap, None)
+
+    def search[A](start: A)(nf: A => Set[(A, Int)])(
+        ef: A => Boolean
+    ): Option[(Int, List[A])] =
+      val distances    = mutable.Map[A, Int](start -> 0)
+      val predecessors = mutable.Map.empty[A, A]
+      val unseen       = mutable.PriorityQueue((0, start))(using Ordering.by(-_._1))
+      val visited      = mutable.Set.empty[A]
+
+      // Reconstruct the path by backtracking from the end node
+      @tailrec
+      def buildPath(node: A, acc: List[A]): List[A] =
+        predecessors.get(node) match
+          case Some(prev) => buildPath(prev, prev :: acc)
+          case None       => acc
+
+      @tailrec
+      def helper(): Option[(Int, List[A])] =
+        if unseen.isEmpty then None
+        else
+          val (currentDist, currentNode) = unseen.dequeue()
+          if visited.contains(currentNode) then helper()
+          else
+            visited.add(currentNode)
+            if ef(currentNode) then
+              val path = buildPath(currentNode, List(currentNode))
+              Some(currentDist, path)
+            else
+              nf(currentNode).foreach { case (neighbor, weight) =>
+                val newDist = currentDist + weight
+                if newDist < distances.getOrElse(neighbor, Int.MaxValue) then
+                  distances(neighbor) = newDist
+                  predecessors(neighbor) = currentNode
+                  unseen.enqueue((newDist, neighbor))
+              }
+              helper()
+
+      helper()
 
   object floodfill:
     def apply[A](start: A, nf: A => Iterable[A])(ff: A => Boolean): Set[A] =
@@ -153,7 +202,7 @@ object Graphs:
           val pivot = selectPivot(P, X)
 
           // Iterate over the set of potential candidates P \ {pivot's neighbors}
-          val newP = P -- adjacency(pivot)
+          val newP = P -- adjacency.getOrElse(pivot, Set.empty)
           newP.foldLeft(cliques) { (cliquesAcc, v) =>
             // Recurse with updated sets
             val newR = R + v

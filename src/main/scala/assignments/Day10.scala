@@ -14,16 +14,18 @@ object Day10:
         c.split(",").map(_.toInt).toList
       )
 
-  val machines = Input("day10.txt").asList.map(parse)
+  val machines: List[Machine] = Input("day10.txt").asList.map(parse)
 
-  def partOne(): Int = machines.map { m =>
-    val toggle = (state: List[Boolean], btn: List[Int]) =>
-      val idxs = btn.filter(_ < state.length).toSet
-      state.zipWithIndex.map { case (v, i) => if idxs.contains(i) then !v else v }
-    Graphs.bfs.search(List.fill(m.target.length)(false))(state => m.buttons.map(toggle(state, _)))(
-      _ == m.target
-    ).map(_._1).get
-  }.sum
+  def partOne(): Int =
+    def presses(machine: Machine): Int =
+      val toggle = (state: List[Boolean], btn: List[Int]) =>
+        val ixs = btn.filter(_ < state.length).toSet
+        state.zipWithIndex.map { case (v, i) => if ixs.contains(i) then !v else v }
+      val nextStates = (state: List[Boolean]) => machine.buttons.map(toggle(state, _))
+      val isGoal     = (state: List[Boolean]) => state == machine.target
+      Graphs.bfs.search(List.fill(machine.target.length)(false))(nextStates)(isGoal).map(_._1).get
+
+    machines.map(presses).sum
 
   def partTwo(): Int =
     Loader.loadNativeLibraries()
